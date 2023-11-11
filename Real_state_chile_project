@@ -1,0 +1,194 @@
+/*CLEANING DATA*/
+
+UPDATE  [Retail_Project].[dbo].casas
+SET Dirección = 'Desconocida' 
+where Dirección IS NULL
+
+
+UPDATE  [Retail_Project].[dbo].casas
+SET Superficie_Construida_M2 = 0 
+where Superficie_Construida_M2 IS NULL
+
+--This query for the columns: 
+--[N_Habitaciones]
+--[N_Baños]
+--[N_Estacionamientos]
+--[Total_Superficie_M2]
+--[Superficie_Construida_M2]
+
+
+/*Solving the queries*/
+
+-- AVG Built area per Communa
+
+SELECT Comuna, AVG(Superficie_Construida_M2) as AVG_Sup_Construida
+FROM casas
+GROUP BY Comuna
+Order By Comuna
+
+
+-- AVG Garden Area
+
+SELECT Comuna, ROUND(AVG((Total_Superficie_M2) - ([Superficie_Construida_M2])),2) as Superficie_Jardin
+FROM casas
+GROUP BY Comuna
+Order by Comuna
+
+
+-- Number of houses per Comuna
+
+SELECT comuna, count(tipo_vivienda) as Numero_Casas
+FROM casas
+group by comuna
+Order by Comuna
+
+-- AVG Price of House per Comuna
+
+SELECT comuna, AVG(CAST(valor_clp AS BIGINT)) as AVG_Precio
+FROM casas
+GROUP BY comuna
+ORDER BY comuna
+
+SELECT comuna, AVG(Valor_UF) as AVG_Precio
+FROM casas
+GROUP BY comuna
+ORDER BY comuna
+
+-- AVG Price of m2
+
+SELECT comuna, Round((AVG(CAST(valor_clp AS BIGINT)) / AVG(Total_Superficie_M2)),2) as AVG_Precio_M2_CLP
+FROM casas
+GROUP BY comuna
+ORDER BY comuna
+
+
+SELECT comuna, Round((AVG(valor_uf) / AVG(Total_Superficie_M2)),4) as AVG_Precio_M2_UF
+FROM casas
+GROUP BY comuna
+ORDER BY comuna
+
+--AVG garage
+
+SELECT comuna, AVG(N_Estacionamientos) as AVG_estacionamiento_por_casa
+FROM casas
+GROUP BY comuna
+ORDER BY comuna
+
+--Full query
+
+SELECT ('Chile, Santiago, ' + Comuna) as Ubicacion, 
+	Comuna
+	, AVG(Superficie_Construida_M2) as AVG_Sup_Construida
+	, ROUND(AVG((Total_Superficie_M2) - ([Superficie_Construida_M2])),2) as Superficie_Jardin
+	,  count(tipo_vivienda) as Numero_Casas
+	, AVG(CAST(valor_clp AS BIGINT)) as AVG_Precio_CLP
+	, AVG(Valor_UF) as AVG_Precio_UF
+	, Round((AVG(CAST(valor_clp AS BIGINT)) / AVG(Total_Superficie_M2)),2) as AVG_Precio_M2_CLP
+	,  Round((AVG(valor_uf) / AVG(Total_Superficie_M2)),4) as AVG_Precio_M2_UF
+	, AVG(N_Estacionamientos) as AVG_estacionamiento_por_casa
+FROM casas
+GROUP BY Comuna
+Order By Comuna
+
+
+/*Las Condes Vs Cerro Navia*/
+
+--AVG Precio casas
+
+SELECT comuna, AVG(CAST(valor_clp AS BIGINT)) as AVG_precio_CLP
+FROM casas
+GROUP BY Comuna
+having comuna ='Las Condes' or  comuna = 'cerro Navia'
+Order By Comuna
+
+
+SELECT comuna, AVG(valor_uf) as AVG_precio_CLP
+FROM casas
+GROUP BY Comuna
+having comuna ='Las Condes' or  comuna = 'cerro Navia'
+Order By Comuna
+
+
+--Casa más barata en ambos
+
+SELECT  comuna, MIN(Valor_CLP) Casa_menor_precio, MAX(valor_clp) as  Casa_mayor_precio
+FROM	CASAS
+WHERE Comuna = 'Las Condes' 
+group by comuna
+UNION
+SELECT  comuna, MIN(Valor_CLP)  Casa_menor_precio, MAX(valor_clp) as  Casa_mayor_precio
+FROM	CASAS
+WHERE comuna = 'Cerro Navia'
+group by comuna
+
+
+--Casa mas grande y chica 
+
+SELECT  comuna, MIN(Superficie_Construida_M2) as Min_Sup_Const_M2, MAX(Superficie_Construida_M2) as Max_Sup_Const_M2
+FROM	CASAS
+WHERE Comuna = 'Las Condes' and Superficie_Construida_M2 <> 0
+group by comuna
+UNION
+SELECT  comuna, MIN(Superficie_Construida_M2) as Min_Sup_Const_M2, MAX(Superficie_Construida_M2) as Max_Sup_Const_M2
+FROM	CASAS
+WHERE comuna = 'Cerro Navia'
+group by comuna
+
+
+-- AVG Price of m2
+
+SELECT comuna, Round((AVG(CAST(valor_clp AS BIGINT)) / AVG(Total_Superficie_M2)),2) as AVG_Precio_M2_CLP
+FROM casas
+Where Comuna = 'Las Condes'
+GROUP BY comuna
+UNION
+SELECT comuna, Round((AVG(CAST(valor_clp AS BIGINT)) / AVG(Total_Superficie_M2)),2) as AVG_Precio_M2_CLP
+FROM casas
+Where Comuna = 'Cerro Navia'
+GROUP BY comuna
+
+
+--All in one query
+
+SELECT  comuna, AVG(CAST(valor_clp AS BIGINT)) as AVG_precio_CLP, AVG(valor_uf) as AVG_precio_CLP,
+		MIN(Valor_CLP) Casa_menor_precio, MAX(valor_clp) as  Casa_mayor_precio,
+		MIN(Superficie_Construida_M2) as Min_Sup_Const_M2, MAX(Superficie_Construida_M2) as Max_Sup_Const_M2,
+		MIN(Superficie_Construida_M2) as Min_Sup_Const_M2, MAX(Superficie_Construida_M2) as Max_Sup_Const_M2,
+		Round((AVG(CAST(valor_clp AS BIGINT)) / AVG(Total_Superficie_M2)),2) as AVG_Precio_M2_CLP
+FROM	CASAS
+WHERE Comuna = 'Las Condes' and Superficie_Construida_M2 <> 0
+group by comuna
+UNION
+SELECT  comuna, AVG(CAST(valor_clp AS BIGINT)) as AVG_precio_CLP, AVG(valor_uf) as AVG_precio_CLP,
+		MIN(Valor_CLP)  Casa_menor_precio, MAX(valor_clp) as  Casa_mayor_precio,
+		MIN(Superficie_Construida_M2) as Min_Sup_Const_M2, MAX(Superficie_Construida_M2) as Max_Sup_Const_M2,
+		MIN(Superficie_Construida_M2) as Min_Sup_Const_M2, MAX(Superficie_Construida_M2) as Max_Sup_Const_M2,
+		Round((AVG(CAST(valor_clp AS BIGINT)) / AVG(Total_Superficie_M2)),2) as AVG_Precio_M2_CLP
+FROM	CASAS
+WHERE comuna = 'Lo Espejo'
+group by comuna
+
+/*Corredores*/
+
+--Top 3 Realtors with the most expensive houses 
+
+SELECT ranks, corredor, Valor_CLP
+FROM (
+	SELECT Corredor, Valor_CLP, RANK() over (order by valor_CLP desc) as Ranks
+	FROM CASAS) as casas_1
+where ranks in (1,2,3)
+order by ranks, Corredor
+
+
+--Number of houses per Realtor
+SELECT corredor, COUNT(tipo_vivienda) as cuenta
+FROM casas
+GROUP BY Corredor
+order by cuenta desc
+
+--Avg of commission per comuna 
+
+SELECT comuna, AVG((CAST(Valor_CLP AS BIGINT) * 4/100)) AVG_comisión_por_comuna
+FROM casas
+GROUP BY comuna
+Order by AVG_comisión_por_comuna
